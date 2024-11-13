@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
-import { UsersController } from './users.controller';
+
 import { UserService } from './users.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User, UserSchema } from './entities/user.schema';
 import { Project, ProjectSchema } from 'src/projects/entities/project.schema';
+import { UserController } from './users.controller';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { Project, ProjectSchema } from 'src/projects/entities/project.schema';
       }),
     }),
   ],
-  controllers: [UsersController],
+  controllers: [UserController],
   providers: [UserService],
+  exports: [UserService],
 })
 export class UsersModule {}

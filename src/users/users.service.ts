@@ -1,58 +1,65 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { User } from './entities/user.schema';
 import { Project } from 'src/projects/entities/project.schema';
 import { UserLoginDto, UserSignupDto } from './dto/user-login/user-login.dto';
-import { ProjectDto } from 'src/projects/dto/create-project.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Project.name) private projectModel: Model<Project>,
-    private jwtService: JwtService,
   ) {}
 
-  async signUp(userSignupDto: UserSignupDto): Promise<User> {
-    const { username, email, password } = userSignupDto;
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new this.userModel({
-      username,
-      email,
-      password: hashedPassword,
-    });
+  async create(userSignUpDto: UserSignupDto): Promise<User> {
+    const newUser = new this.userModel(userSignUpDto);
     return newUser.save();
   }
 
-  async login(userLoginDto: UserLoginDto): Promise<{ accessToken: string }> {
-    const { email, password } = userLoginDto;
-    const user = await this.userModel.findOne({ email });
-
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const payload = { username: user.username, sub: user._id };
-    const accessToken = this.jwtService.sign(payload);
-    return { accessToken };
+  async findAll(): Promise<User[]> {
+    return this.userModel.find().exec();
   }
 
-  async projectEntry(projectDto: ProjectDto, userId: string): Promise<Project> {
-    const user = await this.userModel.findById(userId);
+  async findOne(id: string): Promise<User> {
+    const user = await this.userModel.findById(id).exec();
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException(`User with ID ${id} not found`);
     }
+    return user;
+  }
 
-    const newProject = new this.projectModel({ ...projectDto, user: user._id });
-    const savedProject = await newProject.save();
+  async findOneByUsername(username: string): Promise<User> {
+    const user = await this.userModel.findOne({ username }).exec();
+    if (!user) {
+      throw new NotFoundException(`User with username ${username} not found`);
+    }
+    return user;
+  }
+  async findUserByEmail(email: string) {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) {
+      throw new NotFoundException(`user with email ${email} was not found`);
+    }
+    return user;
+  }
 
-    user.projects.push(savedProject._id as Types.ObjectId);
-    await user.save();
+  async update(id: string, userSignupDto: UserSignupDto): Promise<User> {
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(id, userSignupDto, { new: true })
+      .exec();
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return updatedUser;
+  }
 
-    return savedProject;
+  async delete(id: string) {
+    return this.userModel.findByIdAndDelete(id);
   }
 }
