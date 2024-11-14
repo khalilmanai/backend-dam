@@ -2,8 +2,6 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
 import { Types } from 'mongoose';
-import { Project } from 'src/projects/entities/project.schema';
-
 @Schema()
 export class User extends Document {
   @Prop({ required: true, unique: true })
@@ -17,6 +15,17 @@ export class User extends Document {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Project' }] })
   projects: Types.Array<Types.ObjectId>;
+
+  @Prop() // For storing the hashed refresh token
+  refreshToken: string;
+
+  @Prop() // For storing the password reset token
+  resetToken: string;
+  @Prop()
+  verificationCode?: string;
+
+  @Prop()
+  verificationCodeExpiration?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

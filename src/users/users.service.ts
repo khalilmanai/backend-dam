@@ -62,4 +62,25 @@ export class UserService {
   async delete(id: string) {
     return this.userModel.findByIdAndDelete(id);
   }
+  async updateVerificationCode(
+    userId: string,
+    code: string,
+    expiration: Date,
+  ): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      verificationCode: code,
+      verificationCodeExpiration: expiration,
+    });
+  }
+
+  async clearVerificationCode(userId: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, {
+      verificationCode: null,
+      verificationCodeExpiration: null,
+    });
+  }
+
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    await this.userModel.findByIdAndUpdate(userId, { password: newPassword });
+  }
 }
