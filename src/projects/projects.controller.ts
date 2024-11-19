@@ -3,51 +3,51 @@ import {
   Get,
   Post,
   Body,
+  Patch,
   Param,
-  Put,
   Delete,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
-import { ProjectsService } from './projects.service';
-import { ProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
-import { Project } from './entities/project.schema';
 
+import { CreateProjectDto } from './dto/create-project.dto';
+import { UpdateProjectDto } from './dto/update-project.dto';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ProjectService } from './projects.service';
+
+@ApiTags('projects')
 @Controller('projects')
-export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+export class ProjectController {
+  constructor(private readonly projectService: ProjectService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() projectDto: ProjectDto): Promise<Project> {
-    return this.projectsService.create(projectDto);
+  @ApiOperation({ summary: 'Create a new project' })
+  async create(@Body() createProjectDto: CreateProjectDto) {
+    return this.projectService.create(createProjectDto);
   }
 
   @Get()
-  @HttpCode(HttpStatus.OK)
-  async findAll(): Promise<Project[]> {
-    return this.projectsService.findAll();
+  @ApiOperation({ summary: 'Get all projects' })
+  async findAll() {
+    return this.projectService.findAll();
   }
 
   @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string): Promise<Project> {
-    return this.projectsService.findOne(id);
+  @ApiOperation({ summary: 'Get a project by ID' })
+  async findOne(@Param('id') id: string) {
+    return this.projectService.findOne(id);
   }
 
-  @Put(':id')
-  @HttpCode(HttpStatus.OK)
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update a project by ID' })
   async update(
     @Param('id') id: string,
     @Body() updateProjectDto: UpdateProjectDto,
-  ): Promise<Project> {
-    return this.projectsService.update(id, updateProjectDto);
+  ) {
+    return this.projectService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<{ message: string }> {
-    return this.projectsService.remove(id);
+  @ApiOperation({ summary: 'Delete a project by ID' })
+  async remove(@Param('id') id: string) {
+    return this.projectService.delete(id);
   }
 }

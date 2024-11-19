@@ -52,7 +52,9 @@ export class UserService {
 
   async findOneByUsername(username: string): Promise<User> {
     try {
-      const user = await this.userModel.findOne({ username }).exec();
+      const user = await this.userModel
+        .findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } })
+        .exec();
       if (!user) {
         throw new NotFoundException(`User with username ${username} not found`);
       }
