@@ -39,7 +39,11 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedException('Invalid credentials');
 
-    const payload = { username: user.username, sub: user._id };
+    const payload = {
+      username: user.username,
+      sub: user._id,
+      email: user.email,
+    };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' }); // Customize expiration as needed
 
