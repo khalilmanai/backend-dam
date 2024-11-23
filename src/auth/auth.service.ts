@@ -41,7 +41,7 @@ export class AuthService {
 
     const payload = {
       username: user.username,
-      sub: user._id,
+      userId: user._id,
       email: user.email,
     };
     const accessToken = this.jwtService.sign(payload);
@@ -152,5 +152,15 @@ export class AuthService {
     const user = await this.userService.findUserByEmail(email);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.userService.updatePassword(user.id, hashedPassword);
+  }
+
+  async logout(userId: string): Promise<void> {
+    const user = await this.userService.findOne(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    // Clear the refresh token to invalidate any further use
+    user.refreshToken = null;
+    await user.save();
   }
 }

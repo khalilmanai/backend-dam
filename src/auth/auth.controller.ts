@@ -1,4 +1,12 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Req,
+  Param,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   UserLoginDto,
@@ -162,5 +170,11 @@ export class AuthController {
         message: error.message,
       };
     }
+  }
+
+  @Post('logout')
+  async logout(@Body() userId: string): Promise<{ message: string }> {
+    await this.authService.logout(userId);
+    return { message: 'Logged out successfully' };
   }
 }
