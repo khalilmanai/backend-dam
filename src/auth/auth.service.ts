@@ -2,8 +2,8 @@ import {
   Injectable,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
-
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/users/users.service';
 import {
@@ -11,8 +11,10 @@ import {
   UserSignupDto,
 } from 'src/users/dto/user-login/user-login.dto';
 import { User } from 'src/users/entities/user.schema';
+import { UserRole } from 'src/users/entities/user.enum';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/mailing/email.service';
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,11 +22,40 @@ export class AuthService {
     private jwtService: JwtService,
     private emailService: EmailService,
   ) {}
+  async signup(userSignupDto: UserSignupDto): Promise<Partial<User>> {
+    const { role, specialty, teamOfMembers } = userSignupDto;
 
-  async signup(userSignupDto: UserSignupDto): Promise<User> {
+    // Validate role-specific fields
+    if (role === UserRole.PROJECT_MANAGER && !teamOfMembers) {
+      throw new BadRequestException(
+        'Team of members is required for Project Manager',
+      );
+    }
+
+    if (role === UserRole.MEMBER && !specialty) {
+      throw new BadRequestException('Specialty is required for Member');
+    }
+
+    // Hash the user's password
     const hashedPassword = await bcrypt.hash(userSignupDto.password, 10);
-    const userToCreate = { ...userSignupDto, password: hashedPassword };
-    return this.userService.create(userToCreate);
+
+    // Prepare the user object for saving
+    const userToCreate = {
+      ...userSignupDto,
+      password: hashedPassword,
+      teamOfMembers:
+        role === UserRole.PROJECT_MANAGER ? teamOfMembers : undefined, // Only add teamOfMembers for PROJECT_MANAGER
+      specialty: role === UserRole.MEMBER ? specialty : undefined, // Only add specialty for MEMBER
+    };
+
+    // Save user to the database
+    const user = await this.userService.create(userToCreate);
+
+    // Remove sensitive fields from the response
+    const { password, refreshToken, resetToken, ...publicUser } =
+      user.toObject();
+
+    return publicUser; // Return user data without sensitive information
   }
 
   async login(
@@ -43,9 +74,10 @@ export class AuthService {
       username: user.username,
       userId: user._id,
       email: user.email,
+      role: user.role, // Include the role in the payload
     };
     const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' }); // Customize expiration as needed
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
     // Hash the refresh token and store it in the user document
     user.refreshToken = await bcrypt.hash(refreshToken, 10);
@@ -69,7 +101,11 @@ export class AuthService {
     if (!isRefreshTokenValid)
       throw new UnauthorizedException('Invalid refresh token');
 
-    const payload = { username: user.username, sub: user._id };
+    const payload = {
+      username: user.username,
+      sub: user._id,
+      role: user.role, // Include the role in the payload
+    };
     const accessToken = this.jwtService.sign(payload);
 
     return { accessToken };
@@ -79,7 +115,6 @@ export class AuthService {
     const user = await this.userService.findUserByEmail(email);
     if (!user) throw new NotFoundException('User not found');
 
-    // Generate and hash a reset token
     const resetToken = this.jwtService.sign(
       { sub: user._id },
       { expiresIn: '1h' },
@@ -87,7 +122,8 @@ export class AuthService {
     user.resetToken = await bcrypt.hash(resetToken, 10);
     await user.save();
 
-    // Send resetToken to user via email (implement emailing separately)
+    // Send resetToken to user via email
+    await this.emailService.sendVerificationEmail(email, resetToken);
   }
 
   async resetPassword(
@@ -159,7 +195,7 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    // Clear the refresh token to invalidate any further use
+
     user.refreshToken = null;
     await user.save();
   }

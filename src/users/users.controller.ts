@@ -9,10 +9,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { UserSignupDto } from './dto/user-login/user-login.dto';
+
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { User } from './entities/user.schema';
 import { UserService } from './users.service';
+import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
+import { MemberSignupDto } from './dto/user-login/member.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -20,15 +22,17 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   /**
-   * Create a new user.
-   * @param userSignupDto - Data transfer object for user sign-up.
+   * Create a new user based on role.
+   * @param userDto - Data transfer object for user creation.
    * @returns The created user.
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new user.' })
-  async create(@Body() userSignupDto: UserSignupDto): Promise<User> {
-    return this.userService.create(userSignupDto);
+  async create(
+    @Body() userDto: ProjectManagerSignupDto | MemberSignupDto,
+  ): Promise<User> {
+    return this.userService.create(userDto);
   }
 
   /**
@@ -81,7 +85,7 @@ export class UserController {
   /**
    * Update a user's information.
    * @param id - ID of the user to update.
-   * @param userSignupDto - Updated user data.
+   * @param userDto - Updated user data.
    * @returns The updated user.
    */
   @Put(':id')
@@ -89,15 +93,14 @@ export class UserController {
   @ApiOperation({ summary: 'Update user information by ID.' })
   async update(
     @Param('id') id: string,
-    @Body() userSignupDto: UserSignupDto,
+    @Body() userDto: ProjectManagerSignupDto | MemberSignupDto,
   ): Promise<User> {
-    return this.userService.update(id, userSignupDto);
+    return this.userService.update(id, userDto);
   }
 
   /**
    * Delete a user by ID.
    * @param id - ID of the user to delete.
-   * @returns A success message.
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

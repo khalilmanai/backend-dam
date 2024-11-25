@@ -1,4 +1,5 @@
+// Example of UserRole enum
 export enum UserRole {
-  MEMBER = 'member',
-  PROJECT_MANAGER = 'manager',
+  PROJECT_MANAGER = 'PROJECT_MANAGER',
+  MEMBER = 'MEMBER',
 }

@@ -9,7 +9,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './entities/user.schema';
 import { Project } from 'src/projects/entities/project.schema';
-import { UserLoginDto, UserSignupDto } from './dto/user-login/user-login.dto';
+
+import { UserRole } from './entities/user.enum';
+import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
+import { MemberSignupDto } from './dto/user-login/member.dto';
 
 @Injectable()
 export class UserService {
@@ -18,15 +21,46 @@ export class UserService {
     @InjectModel(Project.name) private projectModel: Model<Project>,
   ) {}
 
-  async create(userSignUpDto: UserSignupDto): Promise<User> {
+  /**
+   * Create a new user based on their role.
+   */
+  async create(
+    userSignupDto: ProjectManagerSignupDto | MemberSignupDto,
+  ): Promise<User> {
+    const { role } = userSignupDto;
+
+    // Validate and process based on role
+    let userToCreate: any = { ...userSignupDto };
+
+    if (role === UserRole.PROJECT_MANAGER) {
+      const { teamOfMembers } = userSignupDto as ProjectManagerSignupDto;
+      if (!teamOfMembers) {
+        throw new BadRequestException(
+          'Team of members is required for Project Manager',
+        );
+      }
+      userToCreate.teamOfMembers = teamOfMembers;
+    } else if (role === UserRole.MEMBER) {
+      const { specialty } = userSignupDto as MemberSignupDto;
+      if (!specialty) {
+        throw new BadRequestException('Specialty is required for Member');
+      }
+      userToCreate.specialty = specialty;
+    } else {
+      throw new BadRequestException('Invalid role provided.');
+    }
+
     try {
-      const newUser = new this.userModel(userSignUpDto);
+      const newUser = new this.userModel(userToCreate);
       return await newUser.save();
     } catch (error) {
       throw new InternalServerErrorException('Error creating user');
     }
   }
 
+  /**
+   * Find all users.
+   */
   async findAll(): Promise<User[]> {
     try {
       return await this.userModel.find().exec();
@@ -35,6 +69,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Find a user by ID.
+   */
   async findOne(id: string): Promise<User> {
     try {
       const user = await this.userModel.findById(id).exec();
@@ -50,6 +87,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Find a user by username.
+   */
   async findOneByUsername(username: string): Promise<User> {
     try {
       const user = await this.userModel
@@ -64,6 +104,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Find a user by email.
+   */
   async findUserByEmail(email: string): Promise<User> {
     try {
       const user = await this.userModel.findOne({ email }).exec();
@@ -76,7 +119,32 @@ export class UserService {
     }
   }
 
-  async update(id: string, userSignupDto: UserSignupDto): Promise<User> {
+  /**
+   * Update a user by ID.
+   */
+  async update(
+    id: string,
+    userSignupDto: ProjectManagerSignupDto | MemberSignupDto,
+  ): Promise<User> {
+    const { role } = userSignupDto;
+
+    // Validate role-specific fields
+    if (role === UserRole.PROJECT_MANAGER) {
+      const { teamOfMembers } = userSignupDto as ProjectManagerSignupDto;
+      if (!teamOfMembers) {
+        throw new BadRequestException(
+          'Team of members is required for Project Manager',
+        );
+      }
+    } else if (role === UserRole.MEMBER) {
+      const { specialty } = userSignupDto as MemberSignupDto;
+      if (!specialty) {
+        throw new BadRequestException('Specialty is required for Member');
+      }
+    } else {
+      throw new BadRequestException('Invalid role provided.');
+    }
+
     try {
       const updatedUser = await this.userModel
         .findByIdAndUpdate(id, userSignupDto, { new: true })
@@ -93,6 +161,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Delete a user by ID.
+   */
   async delete(id: string): Promise<void> {
     try {
       const deletedUser = await this.userModel.findByIdAndDelete(id).exec();
@@ -107,6 +178,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Update verification code for user.
+   */
   async updateVerificationCode(
     userId: string,
     code: string,
@@ -126,6 +200,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Clear verification code for user.
+   */
   async clearVerificationCode(userId: string): Promise<void> {
     try {
       await this.userModel
@@ -141,6 +218,9 @@ export class UserService {
     }
   }
 
+  /**
+   * Update password for user.
+   */
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     try {
       await this.userModel

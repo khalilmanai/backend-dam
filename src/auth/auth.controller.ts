@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Req,
   Param,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -21,16 +22,28 @@ export class AuthController {
 
   /**
    * User sign-up endpoint.
-   * Registers a new user with hashed password.
+   * Registers a new user with role-specific validations.
    * @param userSignupDto - User sign-up data transfer object.
    * @returns Confirmation of user creation.
    */
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Create a new user with hashed password.',
+    summary: 'Create a new user with role-specific validations.',
   })
   async signup(@Body() userSignupDto: UserSignupDto) {
+    const { role, teamOfMembers, specialty } = userSignupDto;
+
+    if (role === 'PROJECT_MANAGER' && !teamOfMembers) {
+      throw new BadRequestException(
+        'Team of members is required for Project Manager role.',
+      );
+    }
+
+    if (role === 'MEMBER' && !specialty) {
+      throw new BadRequestException('Specialty is required for Member role.');
+    }
+
     return this.authService.signup(userSignupDto);
   }
 
@@ -38,11 +51,11 @@ export class AuthController {
    * User login endpoint.
    * Authenticates a user and generates a JWT.
    * @param userLoginDto - User login data transfer object.
-   * @returns Access token and user details.
+   * @returns Access token and refresh token.
    */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Authenticate a user and return a JWT.' })
+  @ApiOperation({ summary: 'Authenticate a user and return JWT tokens.' })
   async login(@Body() userLoginDto: UserLoginDto) {
     return this.authService.login(userLoginDto);
   }
@@ -172,9 +185,17 @@ export class AuthController {
     }
   }
 
+  /**
+   * User logout endpoint.
+   * Logs out the user by clearing their refresh token.
+   * @param userId - ID of the user to log out.
+   * @returns Logout success message.
+   */
   @Post('logout')
-  async logout(@Body() userId: string): Promise<{ message: string }> {
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Log out the user by clearing the refresh token.' })
+  async logout(@Body('userId') userId: string): Promise<{ message: string }> {
     await this.authService.logout(userId);
-    return { message: 'Logged out successfully' };
+    return { message: 'Logged out successfully.' };
   }
 }

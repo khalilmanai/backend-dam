@@ -11,7 +11,7 @@ async function bootstrap() {
       'This is backend server for the Project Management application dedicated to Manage Professional IT projects with the Help of High End Artificial intelligence solutions.',
     )
     .addBearerAuth()
-    .setVersion('1.0.0')
+    .setVersion('1.1.0')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
