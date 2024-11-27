@@ -33,7 +33,7 @@ export class BaseUserDto {
     enum: UserRole,
     example: UserRole.MEMBER,
   })
-  @IsNotEmpty()
+  
   @IsString()
   role: UserRole;
 }
