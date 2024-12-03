@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsNotEmpty } from 'class-validator';
 import { BaseUserDto } from './base-user.dto';
+import { Types } from 'mongoose';
 
 export class ProjectManagerSignupDto extends BaseUserDto {
   @ApiProperty({
@@ -10,5 +11,5 @@ export class ProjectManagerSignupDto extends BaseUserDto {
   })
   @IsNotEmpty()
   @IsArray()
-  teamOfMembers: string[];
+  teamOfMembers: Types.Array<Types.ObjectId>;
 }

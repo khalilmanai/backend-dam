@@ -14,6 +14,7 @@ import { User } from 'src/users/entities/user.schema';
 import { UserRole } from 'src/users/entities/user.enum';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from 'src/mailing/email.service';
+import { UserStatus } from 'src/users/entities/status.enum';
 
 @Injectable()
 export class AuthService {
@@ -78,7 +79,8 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
+    // set status to online
+    user.status = UserStatus.ONLINE;
     // Hash the refresh token and store it in the user document
     user.refreshToken = await bcrypt.hash(refreshToken, 10);
     await user.save();
@@ -196,6 +198,7 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
+    user.status = UserStatus.OFFLINE;
     user.refreshToken = null;
     await user.save();
   }

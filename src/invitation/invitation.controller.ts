@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Param, Patch, Get } from '@nestjs/common';
 import { InvitationService } from './invitation.service';
 import mongoose from 'mongoose';
 
@@ -24,6 +24,13 @@ export class InvitationController {
       invitationId,
       inviteeId,
       status,
+    );
+  }
+
+  @Get('user/:userId')
+  async getUserInvitations(@Param('userId') userId: string) {
+    return this.invitationService.getUserInvitations(
+      new mongoose.Types.ObjectId(userId),
     );
   }
 }
