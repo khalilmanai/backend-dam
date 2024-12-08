@@ -8,6 +8,10 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Patch,
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -15,6 +19,7 @@ import { User } from './entities/user.schema';
 import { UserService } from './users.service';
 import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
 import { MemberSignupDto } from './dto/user-login/member.dto';
+import { UserRole } from './entities/user.enum';
 
 @ApiTags('Users')
 @Controller('users')
@@ -152,5 +157,43 @@ export class UserController {
     @Body() body: { newPassword: string },
   ): Promise<void> {
     await this.userService.updatePassword(userId, body.newPassword);
+  }
+
+  @Patch('update/:id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() userSignupDto: ProjectManagerSignupDto | MemberSignupDto,
+  ): Promise<User> {
+    const { role } = userSignupDto;
+
+    // Validate role-specific fields
+    if (role === UserRole.PROJECT_MANAGER) {
+      const { teamOfMembers } = userSignupDto as ProjectManagerSignupDto;
+      if (!teamOfMembers) {
+        throw new BadRequestException(
+          'Team of members is required for Project Manager',
+        );
+      }
+    } else if (role === UserRole.MEMBER) {
+      const { specialty } = userSignupDto as MemberSignupDto;
+      if (!specialty) {
+        throw new BadRequestException('Specialty is required for Member');
+      }
+    } else {
+      throw new BadRequestException('Invalid role provided.');
+    }
+
+    try {
+      const updatedUser = await this.userService.update(id, userSignupDto);
+      if (!updatedUser) {
+        throw new NotFoundException(`User with ID ${id} not found`);
+      }
+      return updatedUser;
+    } catch (error) {
+      if (error.name === 'CastError') {
+        throw new BadRequestException('Invalid user ID format');
+      }
+      throw new InternalServerErrorException('Error updating user');
+    }
   }
 }

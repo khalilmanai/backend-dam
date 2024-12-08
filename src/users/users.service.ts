@@ -109,7 +109,9 @@ export class UserService {
    */
   async findUserByEmail(email: string): Promise<User> {
     try {
-      const user = await this.userModel.findOne({ email }).exec();
+      const user = await this.userModel
+        .findOne({ email: email.toLocaleLowerCase() })
+        .exec();
       if (!user) {
         throw new NotFoundException(`User with email ${email} not found`);
       }

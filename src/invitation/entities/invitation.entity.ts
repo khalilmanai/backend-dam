@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-@Schema()
+@Schema({ timestamps: true })
 export class Invitation extends Document {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   manager: Types.ObjectId; // The manager sending the invitation

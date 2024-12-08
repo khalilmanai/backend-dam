@@ -17,7 +17,9 @@ export class InvitationService {
   ) {
     // Initialize Firebase Admin SDK
     admin.initializeApp({
-      credential: admin.credential.applicationDefault(), // Use service account for better security
+      credential: admin.credential.cert(
+        './src/invitation/FirebaseService.json',
+      ),
     });
   }
 
