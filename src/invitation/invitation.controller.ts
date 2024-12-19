@@ -28,9 +28,7 @@ export class InvitationController {
   }
 
   @Get('user/:userId')
-  async getUserInvitations(@Param('userId') userId: string) {
-    return this.invitationService.getUserInvitations(
-      new mongoose.Types.ObjectId(userId),
-    );
+  async getUserInvitations(@Param('userId') userId: mongoose.Types.ObjectId) {
+    return this.invitationService.getUserInvitations(userId);
   }
 }

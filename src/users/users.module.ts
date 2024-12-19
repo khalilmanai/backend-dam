@@ -20,7 +20,7 @@ import { UserController } from './users.controller';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'), // Get JWT_SECRET from ConfigService
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: '24h' },
       }),
     }),
   ],

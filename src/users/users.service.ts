@@ -232,4 +232,14 @@ export class UserService {
       throw new InternalServerErrorException('Error updating password');
     }
   }
+
+  async getAllMembers(): Promise<User[]> {
+    // Retrieve all users
+    const users = await this.findAll();
+
+    // Filter users with role "MEMBER"
+    const members = users.filter((user) => user.role === 'MEMBER');
+
+    return members;
+  }
 }

@@ -77,7 +77,7 @@ export class AuthService {
       email: user.email,
       role: user.role, // Include the role in the payload
     };
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     // set status to online
     user.status = UserStatus.ONLINE;
@@ -119,7 +119,7 @@ export class AuthService {
 
     const resetToken = this.jwtService.sign(
       { sub: user._id },
-      { expiresIn: '1h' },
+      { expiresIn: '7d' },
     );
     user.resetToken = await bcrypt.hash(resetToken, 10);
     await user.save();

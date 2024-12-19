@@ -20,6 +20,7 @@ import { UserService } from './users.service';
 import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
 import { MemberSignupDto } from './dto/user-login/member.dto';
 import { UserRole } from './entities/user.enum';
+import { get } from 'mongoose';
 
 @ApiTags('Users')
 @Controller('users')
@@ -195,5 +196,9 @@ export class UserController {
       }
       throw new InternalServerErrorException('Error updating user');
     }
+  }
+  @Get('/members/members')
+  async getAllMembers(): Promise<User[]> {
+    return this.userService.getAllMembers();
   }
 }
