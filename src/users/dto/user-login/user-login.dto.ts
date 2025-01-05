@@ -34,4 +34,9 @@ export class UserSignupDto {
   // teamOfMembers is required for PROJECT_MANAGER
   @IsOptional()
   teamOfMembers?: string[];
+
+  // This property will be used to accept image as base64 or file upload
+  @ApiProperty({ type: 'string', format: 'binary', required: false })
+  @IsOptional()
+  image?: string;
 }

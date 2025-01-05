@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Param, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Get,
+  Delete,
+} from '@nestjs/common';
 import { InvitationService } from './invitation.service';
 import mongoose from 'mongoose';
 
@@ -25,5 +33,15 @@ export class InvitationController {
       inviteeId,
       status,
     );
+  }
+
+  @Get('user/:userId')
+  async getUserInvitations(@Param('userId') userId: mongoose.Types.ObjectId) {
+    return this.invitationService.getUserInvitations(userId);
+  }
+
+  @Delete('delete/:id')
+  async deleteInvitation(@Param('id') invitationId: mongoose.Types.ObjectId) {
+    return this.invitationService.deleteInvitation(invitationId);
   }
 }

@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { UserRole } from 'src/users/entities/user.enum';
@@ -29,11 +30,17 @@ export class BaseUserDto {
   password: string;
 
   @ApiProperty({
+    description: 'The user profile image',
+  })
+  @Optional()
+  image: string;
+
+  @ApiProperty({
     description: 'The role of the user',
     enum: UserRole,
     example: UserRole.MEMBER,
   })
-  
+  @IsNotEmpty()
   @IsString()
   role: UserRole;
 }

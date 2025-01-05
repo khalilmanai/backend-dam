@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { Document, Types } from 'mongoose';
 import { UserRole } from './user.enum';
+import { UserStatus } from './status.enum';
 
 @Schema()
 export class User extends Document {
@@ -78,6 +79,11 @@ export class User extends Document {
   })
   role: UserRole;
 
+  @Prop({
+    type: String,
+  })
+  image?: string;
+
   @ApiProperty({
     description: 'The specialty of the user (required for members)',
     example: 'Software Engineer',
@@ -112,6 +118,19 @@ export class User extends Document {
     },
   })
   teamOfMembers?: Types.Array<Types.ObjectId>;
+  @ApiProperty({
+    description: 'The current status of the user',
+    enum: UserStatus,
+    example: UserStatus.ONLINE,
+  })
+  @Prop({
+    type: String,
+    enum: UserStatus,
+    default: UserStatus.OFFLINE,
+  })
+  status: UserStatus;
+  @Prop({ type: String })
+  fcmToken?: string; // Optional field to store FCM token
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

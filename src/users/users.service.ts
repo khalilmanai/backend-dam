@@ -6,20 +6,17 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { User } from './entities/user.schema';
-import { Project } from 'src/projects/entities/project.schema';
 
 import { UserRole } from './entities/user.enum';
 import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
 import { MemberSignupDto } from './dto/user-login/member.dto';
+import { UserStatus } from './entities/status.enum';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(Project.name) private projectModel: Model<Project>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   /**
    * Create a new user based on their role.
@@ -109,7 +106,9 @@ export class UserService {
    */
   async findUserByEmail(email: string): Promise<User> {
     try {
-      const user = await this.userModel.findOne({ email }).exec();
+      const user = await this.userModel
+        .findOne({ email: email.toLocaleLowerCase() })
+        .exec();
       if (!user) {
         throw new NotFoundException(`User with email ${email} not found`);
       }
@@ -229,5 +228,26 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException('Error updating password');
     }
+  }
+
+  async getAllMembers(): Promise<User[]> {
+    // Retrieve all users
+    const users = await this.findAll();
+
+    // Filter users with role "MEMBER"
+    const members = users.filter((user) => user.role === 'MEMBER');
+
+    return members;
+  }
+  async updateUserStatus(
+    userId: Types.ObjectId,
+    status: UserStatus,
+  ): Promise<User | null> {
+    const user = await this.userModel.findOneAndUpdate(
+      { _id: userId }, // Query by ID
+      { status: status }, // Update the status
+      { new: true }, // Return the updated document
+    );
+    return user;
   }
 }

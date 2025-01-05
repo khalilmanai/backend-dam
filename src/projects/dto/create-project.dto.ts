@@ -1,75 +1,44 @@
-import {
-  IsNotEmpty,
-  IsEnum,
-  IsNumber,
-  Min,
-  MaxLength,
-  IsDate,
-  IsString,
-} from 'class-validator';
+import { Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { Method } from '../entities/method.enum';
+import { IsString, IsNotEmpty, IsArray, ArrayNotEmpty, IsMongoId } from 'class-validator';
 
 export class CreateProjectDto {
-  @ApiProperty({
-    description: 'Unique project identifier.',
-    example: 101,
-  })
-  @IsNumber()
-  @Min(1)
-  projectId: number;
-
-  @ApiProperty({
-    description: 'Name of the project.',
-    example: 'Website Redesign',
-    maxLength: 100,
-  })
+  @ApiProperty({ example: 'Project Alpha' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
   name: string;
 
-  @ApiProperty({
-    description: 'Brief description of the project.',
-    example: 'A project to redesign the corporate website.',
-    maxLength: 500,
-  })
+  @ApiProperty({ example: 'Project description...' })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(500)
   description: string;
 
-  @ApiProperty({
-    description: 'Start date of the project.',
-    example: '2024-01-01T00:00:00.000Z',
-    type: String,
-  })
-  @IsDate()
-  startDate: Date;
-
-  @ApiProperty({
-    description: 'End date of the project.',
-    example: '2024-06-01T00:00:00.000Z',
-    type: String,
-  })
-  @IsDate()
-  endDate: Date;
-
-  @ApiProperty({
-    description: 'Budget allocated for the project.',
-    example: 50000,
-    minimum: 0,
-  })
-  @IsNumber()
-  @Min(0)
-  budget: number;
-
-  @ApiProperty({
-    description: 'Project management methodology.',
-    enum: Method,
-    example: 'Kanban',
-  })
+  @ApiProperty({ example: '5000' })
+  @IsString()
   @IsNotEmpty()
-  @IsEnum(Method, { message: 'Method must be one of Kanban, XP, or Scrum' })
-  method: Method;
+  budget: string;
+
+  @ApiProperty({ example: '2024-12-31' })
+  @IsString()
+  @IsNotEmpty()
+  deadline: string;
+
+  @ApiProperty({ example: 'SCRUM' })
+  @IsString()
+  @IsNotEmpty()
+  methodology: string;
+
+  @ApiProperty({ example: '64b5f1d2e4a4e5c2b5d12345' })
+  @IsNotEmpty()
+  @IsMongoId() // Ensure this is a valid ObjectId
+  projectManager: string;
+  
+  @ApiProperty({ type: [String], example: ['64b5f1d2e4a4e5c2b5d12346'] })
+  @IsArray()
+  @IsMongoId({ each: true }) // Ensure all elements are valid ObjectIds
+  teamMembers: string[];
+  
+
+  @ApiProperty({ required: false })
+  cahierDeChargeUrl?: string;
 }

@@ -7,6 +7,9 @@ import {
   Req,
   Param,
   BadRequestException,
+  Get,
+  Headers,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
@@ -14,11 +17,15 @@ import {
   UserSignupDto,
 } from 'src/users/dto/user-login/user-login.dto';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   /**
    * User sign-up endpoint.
@@ -191,6 +198,24 @@ export class AuthController {
    * @param userId - ID of the user to log out.
    * @returns Logout success message.
    */
+
+  @Get('validate-token')
+  validateToken(@Headers('Authorization') authHeader: string) {
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+
+    try {
+      // Verify the token using JwtService
+      const decoded = this.jwtService.verify(token);
+      return { valid: true, decoded };
+    } catch (err) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Log out the user by clearing the refresh token.' })

@@ -7,13 +7,21 @@ import { InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { User } from 'src/users/entities/user.schema';
 import { Invitation } from './entities/invitation.entity';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class InvitationService {
   constructor(
     @InjectModel(Invitation.name) private invitationModel: Model<Invitation>,
     @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  ) {
+    // Initialize Firebase Admin SDK
+    admin.initializeApp({
+      credential: admin.credential.cert(
+        './src/invitation/FirebaseService.json',
+      ),
+    });
+  }
 
   // Send an invitation
   async sendInvitation(
@@ -56,7 +64,27 @@ export class InvitationService {
       status: 'Pending',
     });
 
-    return invitation.save();
+    const savedInvitation = await invitation.save();
+
+    // Send FCM notification
+    if (invitee.fcmToken) {
+      const notificationPayload = {
+        notification: {
+          title: 'New Invitation',
+          body: `You have been invited by ${manager.username} to join their team.`,
+        },
+        token: invitee.fcmToken,
+      };
+
+      try {
+        await admin.messaging().send(notificationPayload);
+        console.log('Notification sent successfully');
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+
+    return savedInvitation;
   }
 
   // Respond to an invitation
@@ -91,5 +119,54 @@ export class InvitationService {
     }
 
     return 'Invitation declined';
+  }
+
+  // Get a user's invitations
+  async getUserInvitations(
+    userId: mongoose.Types.ObjectId,
+  ): Promise<Invitation[]> {
+    // Validate if the user exists
+    const user = await this.userModel.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Fetch invitations where the user is the invitee
+    const invitations = await this.invitationModel
+      .find({ invitee: userId })
+      .populate('manager', 'username email') // Populate manager's details
+      .populate('invitee', 'username email') // Populate invitee's details
+      .exec();
+
+    return invitations;
+  }
+
+  async deleteInvitation(invitationId: mongoose.Types.ObjectId) {
+    try {
+      const invitation = await this.invitationModel.findOne({
+        _id: invitationId,
+      });
+
+      if (!invitation) {
+        console.log('no invitation exists for this id');
+        return {
+          status: 'fail',
+          message: 'no invitation for this user to be deleted',
+        };
+      } else {
+        await this.invitationModel.deleteOne({ _id: invitationId });
+        return {
+          status: 'success',
+          message: 'invitation deleted Successfully',
+        };
+      }
+    } catch (error) {
+      console.log('error', error);
+      return {
+        status: 'Error',
+        message: `Error deleting this invitation ${error}`,
+      };
+    }
   }
 }
