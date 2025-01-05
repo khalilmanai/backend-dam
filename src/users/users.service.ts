@@ -8,7 +8,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from './entities/user.schema';
-import { Project } from 'src/projects/entities/project.schema';
 
 import { UserRole } from './entities/user.enum';
 import { ProjectManagerSignupDto } from './dto/user-login/project-manager.dto';
@@ -17,10 +16,7 @@ import { UserStatus } from './entities/status.enum';
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(Project.name) private projectModel: Model<Project>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   /**
    * Create a new user based on their role.
