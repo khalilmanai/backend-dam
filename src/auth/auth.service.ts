@@ -24,7 +24,7 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
   async signup(userSignupDto: UserSignupDto): Promise<Partial<User>> {
-    const { role, specialty, teamOfMembers } = userSignupDto;
+    const { role, specialty, teamOfMembers, image } = userSignupDto;
 
     // Validate role-specific fields
     if (role === UserRole.PROJECT_MANAGER && !teamOfMembers) {
@@ -47,6 +47,7 @@ export class AuthService {
       teamOfMembers:
         role === UserRole.PROJECT_MANAGER ? teamOfMembers : undefined, // Only add teamOfMembers for PROJECT_MANAGER
       specialty: role === UserRole.MEMBER ? specialty : undefined, // Only add specialty for MEMBER
+      image: image,
     };
 
     // Save user to the database
@@ -70,17 +71,19 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid)
       throw new UnauthorizedException('Invalid credentials');
-
+    user.status = UserStatus.ONLINE;
     const payload = {
       username: user.username,
       userId: user._id,
       email: user.email,
       role: user.role, // Include the role in the payload
+      image: user.image,
+      status: user.status,
     };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     // set status to online
-    user.status = UserStatus.ONLINE;
+
     // Hash the refresh token and store it in the user document
     user.refreshToken = await bcrypt.hash(refreshToken, 10);
     await user.save();
@@ -107,6 +110,7 @@ export class AuthService {
       username: user.username,
       sub: user._id,
       role: user.role, // Include the role in the payload
+      status: user.status,
     };
     const accessToken = this.jwtService.sign(payload);
 

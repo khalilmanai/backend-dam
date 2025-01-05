@@ -79,6 +79,11 @@ export class User extends Document {
   })
   role: UserRole;
 
+  @Prop({
+    type: String,
+  })
+  image?: string;
+
   @ApiProperty({
     description: 'The specialty of the user (required for members)',
     example: 'Software Engineer',

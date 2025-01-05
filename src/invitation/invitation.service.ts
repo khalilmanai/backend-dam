@@ -141,4 +141,32 @@ export class InvitationService {
 
     return invitations;
   }
+
+  async deleteInvitation(invitationId: mongoose.Types.ObjectId) {
+    try {
+      const invitation = await this.invitationModel.findOne({
+        _id: invitationId,
+      });
+
+      if (!invitation) {
+        console.log('no invitation exists for this id');
+        return {
+          status: 'fail',
+          message: 'no invitation for this user to be deleted',
+        };
+      } else {
+        await this.invitationModel.deleteOne({ _id: invitationId });
+        return {
+          status: 'success',
+          message: 'invitation deleted Successfully',
+        };
+      }
+    } catch (error) {
+      console.log('error', error);
+      return {
+        status: 'Error',
+        message: `Error deleting this invitation ${error}`,
+      };
+    }
+  }
 }
